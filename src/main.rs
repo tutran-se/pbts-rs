@@ -266,9 +266,12 @@ fn main() {
         }
     }
 
+    let total_v: i64 = rever_de_original_data_v.iter().sum();
+
     let duration = start.elapsed();
 
     println!("{:?}", duration);
+    println!("Total V: {:?}", total_v);
 
     println!("Ts: {:?}", &rever_de_original_data_ts[0..10]);
     println!("Ts: {:?}", &rever_de_original_data_v[0..10]);
