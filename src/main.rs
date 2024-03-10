@@ -221,7 +221,14 @@ fn main() {
     let starter = Instant::now();
     sum_by_group_in_parallel(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
-    println!("Parallel: {:?}", duration);
+    println!("Aggregation (1 param): {:?}", duration);
+
+    let starter = Instant::now();
+    for _ in 0..5 {
+        sum_by_group_in_parallel(&tuple, 1707152400, 60);
+    }
+    let duration = starter.elapsed();
+    println!("Aggregation (5 params): {:?}", duration);
 }
 
 fn fetch_data() -> (Vec<i64>, Vec<i64>) {
