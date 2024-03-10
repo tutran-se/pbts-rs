@@ -218,17 +218,18 @@ fn main() {
     // let duration = starter.elapsed();
     // println!("Normal {:?}", duration);
 
+    println!("~~~~Interval 1 minute ~~~~~");
     let starter = Instant::now();
-    sum_by_group_in_parallel(&tuple, 1707152400, 60);
+    sum_aggregation(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
-    println!("Aggregation (1 param): {:?}", duration);
+    println!("---Aggregation (1 param): {:?}", duration);
 
     let starter = Instant::now();
     for _ in 0..5 {
-        sum_by_group_in_parallel(&tuple, 1707152400, 60);
+        sum_aggregation(&tuple, 1707152400, 60);
     }
     let duration = starter.elapsed();
-    println!("Aggregation (5 params): {:?}", duration);
+    println!("---Aggregation (5 params): {:?}", duration);
 }
 
 fn fetch_data() -> (Vec<i64>, Vec<i64>) {
@@ -283,43 +284,8 @@ fn fetch_data() -> (Vec<i64>, Vec<i64>) {
 
     (rever_de_original_data_ts, rever_de_original_data_v)
 }
-fn sum_by_group_normal(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
-    let (ts_items, v_items) = tuple;
 
-    let mut data_items: Vec<DataPoint> = Vec::with_capacity(ts_items.len());
-
-    for (i, ts) in ts_items.iter().enumerate() {
-        let hash_map = DataPoint {
-            ts: *ts,
-            v: (v_items[i] / 1000) as f64,
-            intervalGroup: (ts - start_ts) / interval,
-        };
-        data_items.push(hash_map);
-    }
-
-    let mut sums: Vec<Sum> = vec![];
-    let mut sum_by_group: f64 = 0.0;
-    let mut current_interval_group = data_items[0].intervalGroup;
-
-    for item in data_items {
-        let DataPoint {
-            v, intervalGroup, ..
-        } = item;
-
-        if intervalGroup == current_interval_group {
-            sum_by_group = sum_by_group + v;
-        } else {
-            sums.push(Sum {
-                totalSum: sum_by_group,
-                intervalGroup: current_interval_group,
-            });
-            current_interval_group = intervalGroup;
-            sum_by_group = v;
-        }
-    }
-}
-
-fn sum_by_group_in_parallel(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
+fn sum_aggregation(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
     let (ts_items, v_items) = tuple;
 
     let data_items: Vec<DataPoint> = ts_items
@@ -353,6 +319,4 @@ fn sum_by_group_in_parallel(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interva
             sum_by_group = v;
         }
     }
-
-    println!("{:?}", sums.len());
 }
