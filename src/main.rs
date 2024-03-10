@@ -218,7 +218,8 @@ fn main() {
     // let duration = starter.elapsed();
     // println!("Normal {:?}", duration);
 
-    println!("~~~~Interval 1 minute ~~~~~");
+    println!("#############################");
+    println!("Interval 1 minute ~~~~~");
     let starter = Instant::now();
     sum_aggregation(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
@@ -227,6 +228,19 @@ fn main() {
     let starter = Instant::now();
     for _ in 0..5 {
         sum_aggregation(&tuple, 1707152400, 60);
+    }
+    let duration = starter.elapsed();
+    println!("---Aggregation (5 params): {:?}", duration);
+    println!("#############################");
+    println!("Interval 1 day ~~~~~");
+    let starter = Instant::now();
+    sum_aggregation(&tuple, 1707152400, 864000);
+    let duration = starter.elapsed();
+    println!("---Aggregation (1 param): {:?}", duration);
+
+    let starter = Instant::now();
+    for _ in 0..5 {
+        sum_aggregation(&tuple, 1707152400, 864000);
     }
     let duration = starter.elapsed();
     println!("---Aggregation (5 params): {:?}", duration);
