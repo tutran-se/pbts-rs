@@ -224,11 +224,11 @@ fn main() {
     println!("Aggregation (1 param): {:?}", duration);
 
     let starter = Instant::now();
-    for _ in 0..25 {
+    for _ in 0..25 * 5 {
         sum_aggregation(&tuple, 1707152400, 60);
     }
     let duration = starter.elapsed();
-    println!("Aggregation (5 params): {:?}", duration);
+    println!("Aggregation (25 params): {:?}", duration);
 }
 
 fn fetch_data() -> (Vec<i64>, Vec<i64>) {
