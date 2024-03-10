@@ -222,13 +222,6 @@ fn main() {
     sum_aggregation(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
     println!("Aggregation (1 param): {:?}", duration);
-
-    let starter = Instant::now();
-    for _ in 0..25 * 5 {
-        sum_aggregation(&tuple, 1707152400, 60);
-    }
-    let duration = starter.elapsed();
-    println!("Aggregation (25 params): {:?}", duration);
 }
 
 fn fetch_data() -> (Vec<i64>, Vec<i64>) {
@@ -284,7 +277,7 @@ fn fetch_data() -> (Vec<i64>, Vec<i64>) {
     (rever_de_original_data_ts, rever_de_original_data_v)
 }
 
-fn sum_aggregation(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
+fn sum_aggregation(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) -> Vec<Sum> {
     let (ts_items, v_items) = tuple;
 
     let data_items: Vec<DataPoint> = ts_items
@@ -318,4 +311,6 @@ fn sum_aggregation(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
             sum_by_group = v;
         }
     }
+
+    sums
 }
