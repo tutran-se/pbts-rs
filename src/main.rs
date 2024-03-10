@@ -220,19 +220,6 @@ fn main() {
 
     let starter = Instant::now();
     sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
     let duration = starter.elapsed();
     println!("Parallel: {:?}", duration);
 }
