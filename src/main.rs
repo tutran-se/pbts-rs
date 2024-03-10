@@ -213,25 +213,19 @@ struct Sum {
 fn main() {
     let tuple = fetch_data();
 
-    let tuple = fetch_data();
-
-    let mut handles = vec![];
+    // let starter = Instant::now();
+    // sum_by_group_normal(&tuple, 1707152400, 86400);
+    // let duration = starter.elapsed();
+    // println!("Normal {:?}", duration);
 
     let starter = Instant::now();
     sum_aggregation(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
-    println!("Aggregation: {:?}", duration);
+    println!("Aggregation (1 param): {:?}", duration);
 
     let starter = Instant::now();
-    for _ in 0..5 {
-        let tuple_clone = tuple.clone(); // Cloning tuple
-        let handle = thread::spawn(move || {
-            sum_aggregation(&tuple_clone, 1707152400, 60);
-        });
-        handles.push(handle);
-    }
-    for handle in handles {
-        handle.join().unwrap();
+    for _ in 0..25 {
+        sum_aggregation(&tuple, 1707152400, 60);
     }
     let duration = starter.elapsed();
     println!("Aggregation (5 params): {:?}", duration);
