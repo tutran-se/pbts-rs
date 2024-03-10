@@ -219,7 +219,7 @@ fn main() {
     // println!("Normal {:?}", duration);
 
     let starter = Instant::now();
-    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
+    sum_by_group_in_parallel(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
     println!("Parallel: {:?}", duration);
 }
