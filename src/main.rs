@@ -347,5 +347,5 @@ fn sum_by_group_in_parallel(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interva
         }
     }
 
-    // println!("{:?}", sums.len());
+    println!("{:?}", sums.len());
 }
