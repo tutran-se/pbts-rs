@@ -7,6 +7,7 @@ use std::{
 };
 
 use flate2::bufread::GzDecoder;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 
 fn write_all(file_path: &str) {
@@ -32,12 +33,6 @@ fn buffer_read_to_string(file_path: &str) -> String {
     }
 
     contents
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct DataPoint {
-    ts: i64,
-    v: f64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -194,15 +189,44 @@ struct Item {
 
 // RLE
 
+use std::thread;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct RLEData {
     ts: Vec<(i64, i32)>,
     v: Vec<(i64, i32)>,
 }
+
+#[derive(Debug)]
+struct DataPoint {
+    ts: i64,
+    v: f64,
+    intervalGroup: i64,
+}
+
+#[derive(Debug)]
+struct Sum {
+    totalSum: f64,
+    intervalGroup: i64,
+}
+
 fn main() {
+    let tuple = fetch_data();
+
+    let starter = Instant::now();
+    sum_by_group_normal(&tuple, 1707152400, 86400);
+    let duration = starter.elapsed();
+    println!("Normal {:?}", duration);
+
+    let starter = Instant::now();
+    sum_by_group_in_parallel(&tuple, 1707152400, 86400);
+    let duration = starter.elapsed();
+    println!("Parallel: {:?}", duration);
+}
+
+fn fetch_data() -> (Vec<i64>, Vec<i64>) {
     let file_path = "data2.bin";
 
-    let start = Instant::now();
     let file = File::open(file_path).unwrap();
     let mut buff_reader = BufReader::new(file);
     let mut buffer: Vec<u8> = vec![];
@@ -210,22 +234,6 @@ fn main() {
 
     let my_item: RLEData = bincode::deserialize(&buffer).unwrap();
 
-    // Revert RLE
-    // let mut original_data_ts: Vec<i64> = Vec::new();
-
-    // for &(value, count) in my_item.ts.iter() {
-    //     for _ in 0..count {
-    //         original_data_ts.push(value);
-    //     }
-    // }
-
-    // let mut original_data_v: Vec<i64> = Vec::new();
-
-    // for &(value, count) in my_item.v.iter() {
-    //     for _ in 0..count {
-    //         original_data_v.push(value);
-    //     }
-    // }
     // Revert RLE more efficiently
     let mut original_data_ts: Vec<i64> = Vec::new();
     for &(value, count) in my_item.ts.iter() {
@@ -266,62 +274,78 @@ fn main() {
         }
     }
 
-    let total_v: i64 = rever_de_original_data_v.iter().sum();
+    (rever_de_original_data_ts, rever_de_original_data_v)
+}
+fn sum_by_group_normal(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
+    let (ts_items, v_items) = tuple;
 
-    let duration = start.elapsed();
+    let mut data_items: Vec<DataPoint> = Vec::with_capacity(ts_items.len());
 
-    println!("{:?}", duration);
-    println!("Total V: {:?}", total_v);
+    for (i, ts) in ts_items.iter().enumerate() {
+        let hash_map = DataPoint {
+            ts: *ts,
+            v: (v_items[i] / 1000) as f64,
+            intervalGroup: (ts - start_ts) / interval,
+        };
+        data_items.push(hash_map);
+    }
 
-    println!("Ts: {:?}", &rever_de_original_data_ts[0..10]);
-    println!("Ts: {:?}", &rever_de_original_data_v[0..10]);
-    println!("Ts: {:?}", rever_de_original_data_ts.len());
-    println!("Ts: {:?}", rever_de_original_data_v.len());
+    let mut sums: Vec<Sum> = vec![];
+    let mut sum_by_group: f64 = 0.0;
+    let mut current_interval_group = data_items[0].intervalGroup;
+
+    for item in data_items {
+        let DataPoint {
+            v, intervalGroup, ..
+        } = item;
+
+        if intervalGroup == current_interval_group {
+            sum_by_group = sum_by_group + v;
+        } else {
+            sums.push(Sum {
+                totalSum: sum_by_group,
+                intervalGroup: current_interval_group,
+            });
+            current_interval_group = intervalGroup;
+            sum_by_group = v;
+        }
+    }
 }
 
-// fn main() {
-//     let file_path = "data2.bin";
-//     let start = Instant::now();
-//     let file = File::open(file_path).unwrap();
-//     let mut buff_reader = BufReader::new(file);
-//     let mut buffer: Vec<u8> = vec![];
-//     buff_reader.read_to_end(&mut buffer).unwrap();
+fn sum_by_group_in_parallel(tuple: &(Vec<i64>, Vec<i64>), start_ts: i64, interval: i64) {
+    let (ts_items, v_items) = tuple;
 
-//     let my_item: RLEData = bincode::deserialize(&buffer).unwrap();
+    let data_items: Vec<DataPoint> = ts_items
+        .par_iter()
+        .enumerate()
+        .map(|(i, ts)| DataPoint {
+            ts: *ts,
+            v: (v_items[i] / 1000) as f64,
+            intervalGroup: (ts - start_ts) / interval,
+        })
+        .collect();
 
-//     // Revert RLE more efficiently
-//     let mut original_data_ts: Vec<i64> = Vec::new();
-//     for &(value, count) in my_item.ts.iter() {
-//         original_data_ts.extend(std::iter::repeat(value).take(count as usize));
-//     }
+    // The rest of the function remains sequential since it involves state-dependent processing
+    let mut sums: Vec<Sum> = vec![];
+    let mut sum_by_group: f64 = 0.0;
+    let mut current_interval_group = data_items[0].intervalGroup;
 
-//     let mut original_data_v: Vec<i64> = Vec::new();
-//     for &(value, count) in my_item.v.iter() {
-//         original_data_v.extend(std::iter::repeat(value).take(count as usize));
-//     }
+    for item in data_items {
+        let DataPoint {
+            v, intervalGroup, ..
+        } = item;
 
-//     // Revert Delta Encoding (DE) more efficiently
-//     let mut rever_de_original_data_ts = if !original_data_ts.is_empty() {
-//         original_data_ts.iter()
-//                         .scan(original_data_ts[0], |state, &x| { *state += x; Some(*state) })
-//                         .collect::<Vec<i64>>()
-//     } else {
-//         Vec::new()
-//     };
+        if intervalGroup == current_interval_group {
+            sum_by_group += v;
+        } else {
+            sums.push(Sum {
+                totalSum: sum_by_group,
+                intervalGroup: current_interval_group,
+            });
+            current_interval_group = intervalGroup;
+            sum_by_group = v;
+        }
+    }
 
-//     let mut rever_de_original_data_v = if !original_data_v.is_empty() {
-//         original_data_v.iter()
-//                        .scan(original_data_v[0], |state, &x| { *state += x; Some(*state) })
-//                        .collect::<Vec<i64>>()
-//     } else {
-//         Vec::new()
-//     };
-
-//     let duration = start.elapsed();
-
-//     println!("{:?}", duration);
-//     println!("Ts: {:?}", &rever_de_original_data_ts[0..10.min(rever_de_original_data_ts.len())]);
-//     println!("V: {:?}", &rever_de_original_data_v[0..10.min(rever_de_original_data_v.len())]);
-//     println!("Ts length: {:?}", rever_de_original_data_ts.len());
-//     println!("V length: {:?}", rever_de_original_data_v.len());
-// }
+    // println!("{:?}", sums.len());
+}

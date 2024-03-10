@@ -22,3 +22,9 @@
 ## Buffered Reader: data.bin (~ 105MB - value: i64)
 
 282.3649ms
+
+# Storage Optimization
+
+## Delta Encoding + RLE (105MB --> 1KB)
+
+155.8692ms
