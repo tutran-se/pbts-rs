@@ -213,37 +213,28 @@ struct Sum {
 fn main() {
     let tuple = fetch_data();
 
-    // let starter = Instant::now();
-    // sum_by_group_normal(&tuple, 1707152400, 86400);
-    // let duration = starter.elapsed();
-    // println!("Normal {:?}", duration);
+    let tuple = fetch_data();
 
-    println!("#############################");
-    println!("Interval 1 minute ~~~~~");
+    let mut handles = vec![];
+
     let starter = Instant::now();
     sum_aggregation(&tuple, 1707152400, 60);
     let duration = starter.elapsed();
-    println!("---Aggregation (1 param): {:?}", duration);
+    println!("Aggregation: {:?}", duration);
 
     let starter = Instant::now();
     for _ in 0..5 {
-        sum_aggregation(&tuple, 1707152400, 60);
+        let tuple_clone = tuple.clone(); // Cloning tuple
+        let handle = thread::spawn(move || {
+            sum_aggregation(&tuple_clone, 1707152400, 60);
+        });
+        handles.push(handle);
+    }
+    for handle in handles {
+        handle.join().unwrap();
     }
     let duration = starter.elapsed();
-    println!("---Aggregation (5 params): {:?}", duration);
-    println!("#############################");
-    println!("Interval 1 day ~~~~~");
-    let starter = Instant::now();
-    sum_aggregation(&tuple, 1707152400, 864000);
-    let duration = starter.elapsed();
-    println!("---Aggregation (1 param): {:?}", duration);
-
-    let starter = Instant::now();
-    for _ in 0..5 {
-        sum_aggregation(&tuple, 1707152400, 864000);
-    }
-    let duration = starter.elapsed();
-    println!("---Aggregation (5 params): {:?}", duration);
+    println!("Aggregation (5 params): {:?}", duration);
 }
 
 fn fetch_data() -> (Vec<i64>, Vec<i64>) {
